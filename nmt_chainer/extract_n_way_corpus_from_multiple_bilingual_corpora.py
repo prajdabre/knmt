@@ -74,13 +74,16 @@ class ExtractNWayCorpus:
 		log.info("Writing from (%s,%s) to (%s,%s)." % (self.src_corpora,self.tgt_corpora,self.src_corpora_filtered,self.tgt_corpora_filtered))
 		
 		for tgt_sentence in common_sentences:
-			for i in xrange(len(self.corpora)):
-				corpus = self.corpora[i]
-				if corpus.has_key(tgt_sentence):
-					self.tgt_corpora_filtered[i].write(tgt_sentence + "\n")
-					self.src_corpora_filtered[i].write(corpus[tgt_sentence] + "\n")
-			self.src_corpora_filtered[i].flush()
-			self.tgt_corpora_filtered[i].flush()
+			if len(tgt_sentence) != 0:
+				for i in xrange(len(self.corpora)):
+					corpus = self.corpora[i]
+					if corpus.has_key(tgt_sentence):
+						if len(corpus[tgt_sentence]) == 0:
+							corpus[tgt_sentence] = unicode("Dummy line being inserted to eliminate issues.")
+						self.tgt_corpora_filtered[i].write(tgt_sentence + "\n")
+						self.src_corpora_filtered[i].write(corpus[tgt_sentence] + "\n")
+				self.src_corpora_filtered[i].flush()
+				self.tgt_corpora_filtered[i].flush()
 			
 		for i in xrange(len(self.corpora)):
 			self.src_corpora_filtered[i].close()

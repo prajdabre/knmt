@@ -1,0 +1,4 @@
+i=$1
+j=$2
+cd /loquat/raj/corpora/smt/21langmultiwaysmt/$i-$j/devfilter
+/home/raj/softwares-and-scripts/mosesdecoder/scripts/training/mert-moses.pl /loquat/raj/corpora/smt/21langmultiwaysmt/$i-$j/dev.$i /loquat/raj/corpora/smt/21langmultiwaysmt/$i-$j/dev.$j /home/raj/softwares-and-scripts/mosesdecoder/bin/moses /loquat/raj/corpora/smt/21langmultiwaysmt/$i-$j/devfilter/moses.ini --mertdir /home/raj/softwares-and-scripts/mosesdecoder/bin/ --rootdir /home/raj/softwares-and-scripts/mosesdecoder/scripts/ -no-filter-phrase-table --batch-mira  --return-best-dev --batch-mira-args '-J 100' --decoder-flags '-threads 1 -v 0' &>log

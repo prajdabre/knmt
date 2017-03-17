@@ -15,6 +15,8 @@ import os.path
 import gzip
 import io
 import random
+import itertools
+from itertools import chain, combinations
 from subword_nmt.apply_bpe import *
 from subword_nmt.learn_bpe import *
 from collections import defaultdict
@@ -42,7 +44,7 @@ class DataPreparationPipeline:
 		self.save_prefix = args.save_prefix
 		self.merge_operations = args.num_bpe_merge_operations
 		self.is_multisource = args.is_multisource
-		self.drop_source_sentences = args.drop_source_sentences
+		self.generate_power_set_of_source_sentences = args.generate_power_set_of_source_sentences
 		self.pretrained_src_bpe_model = args.pretrained_src_bpe_model
 		self.pretrained_tgt_bpe_model = args.pretrained_tgt_bpe_model
 		self.min_frequency = 2
@@ -111,7 +113,7 @@ class DataPreparationPipeline:
 			self.generate_multilingual_data_raw()
 
 	def preprocess_eval_data(self, train_dev_test = "dev"):
-		self.drop_source_sentences = False
+		self.generate_power_set_of_source_sentences = True
 		self.segment_corpora(train_dev_test)
 		self.generate_multilingual_data(train_dev_test)
 		
@@ -476,12 +478,10 @@ class DataPreparationPipeline:
 
 	def generate_sentence_dropped_multisource_sentences(self, all_source_sents):
 		final_src_sents = [" ".join(all_source_sents) + "\n"]
-		if self.drop_source_sentences:
-			max_drops = len(all_source_sents)-1
-			for i in range(max_drops):
-				drop_index = random.randint(0, len(all_source_sents)-1)
-				all_source_sents.pop(drop_index)
-				final_src_sents.append(" ".join(all_source_sents) + "\n")
+		if self.generate_power_set_of_source_sentences:
+			for src_sents_subset in chain.from_iterable(combinations(all_source_sents,r) for r in range(len(all_source_sents)+1)):
+				if len(src_sents_subset) != 0 and len(src_sents_subset) != len(all_source_sents):
+					final_src_sents.append(" ".join(src_sents_subset) + "\n")
 		return final_src_sents
 
 
@@ -528,7 +528,7 @@ if __name__ == '__main__':
 	parser.add_argument("--max_src_vocab", type=int, default=None, help="Maximum number of source side symbols desired. This will automatically limit the number of BPE merge operations by stopping when this limit has been reached.  When the joint_bpe_model flag has been specified the limit will be decided by the value of this flag.")
 	parser.add_argument("--max_tgt_vocab", type=int, default=None, help="Maximum number of target side symbols desired. This will automatically limit the number of BPE merge operations by stopping when this limit has been reached. When the joint_bpe_model flag has been specified the limit will be decided by the value of the max_src_vocab flag.")
 	parser.add_argument("--is_multisource", default=False, action = "store_true", help="Do you want to generate multisource data? This assumes that the target side of each sentence is the same.")
-	parser.add_argument("--drop_source_sentences", default=False, action = "store_true", help="Do you want to generate multisource data with randomly dropped source sentences? Is to ensure that the NMT system becomes robust enough to deal with situations where multiple source sentences might not exist.")
+	parser.add_argument("--generate_power_set_of_source_sentences", default=False, action = "store_true", help="Do you want to generate multisource data with randomly dropped source sentences? Is to ensure that the NMT system becomes robust enough to deal with situations where multiple source sentences might not exist.")
 	parser.add_argument(
 		"--pretrained_src_bpe_model", help="Use a pretrained BPE model for source text segmentation")
 	parser.add_argument(
